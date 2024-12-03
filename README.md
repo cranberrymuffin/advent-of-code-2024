@@ -1,1 +1,1 @@
-https://adventofcode.com/2024
+solving https://adventofcode.com/2024 in python
