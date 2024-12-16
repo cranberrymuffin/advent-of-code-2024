@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 def find_gps_sum(map):
     sum = 0
     for row, row_data in enumerate(map):
