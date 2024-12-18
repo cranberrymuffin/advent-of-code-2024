@@ -66,6 +66,42 @@ def instruction(i):
             bdv(instructions[i+1])
         case 7:
             cdv(instructions[i+1])
+
+def run(start_a, start_b, start_c):
+    global a
+    global b
+    global c
+    global instructions
+    global output
+
+    output.clear()
+    a = start_a
+    b = start_b
+    c = start_c
+    i = 0
+    while i < len(instructions):
+        if(instructions[i] != 3):
+            instruction(i)
+        if instructions[i] != 3 or a == 0:
+            i += 2
+        else:
+            i = instructions[i+1]
+
+    return output
+
+def find_a(start_a, start_b, start_c):
+    matches = [pow(8, len(instructions) - 1)]
+    for i in range(len(instructions) - 1, -1, -1):
+        start_a = pow(8, i)
+        new_matches = []
+        for m in matches:
+            for j in range(8):
+                res = run(m + start_a * j, start_b, start_c)
+                if res[i] == instructions[i]:
+                    new_matches.append(m + start_a * j)
+        matches = new_matches
+    return min(matches)
+
 with open("input/dec17.txt", "r") as file:
 
     while line := file.readline():
@@ -78,37 +114,8 @@ with open("input/dec17.txt", "r") as file:
         elif "Program" in line:
             instructions = list(map(int, re.findall(r'\d+', line)))
 
-    a = start_a
-    b = start_b
-    c = start_c
-    i = 0
-    while i < len(instructions):
-        if(instructions[i] != 3):
-            instruction(i)
-        if instructions[i] != 3 or a == 0:
-            i += 2
-        else:
-            i = instructions[i+1]
-        
+
+    run(start_a, start_b, start_c)
     print(",".join(map(str, output)))
     
-    start_a = pow(8, len(instructions) -1)
-
-
-    for start_a in range (pow(8, len(instructions)), pow(8, len(instructions) + 1)):
-        output.clear()
-        a = start_a
-        b = start_b
-        c = start_c
-        i = 0
-        while i < len(instructions):
-            if(instructions[i] != 3):
-                instruction(i)
-            if instructions[i] != 3 or a == 0:
-                i += 2
-            else:
-                i = instructions[i+1]
-        if(instructions == output):
-            print(start_a)
-            break
-
+    print(find_a(start_a, start_b, start_c))
