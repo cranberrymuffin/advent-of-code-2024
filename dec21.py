@@ -66,40 +66,43 @@ def find_path_recursive(currPos, finalPos, invalidPos, horizontalPath = '', vert
     verticalPath = verticalPaths[(currPos, finalPos, invalidPos)]
     horizontalPath = horizontalPaths[(currPos, finalPos, invalidPos)]
 
-    if level == 2:
+    if level == 25:
         if horizontalPath is None:
-            return verticalPath
+            return len(verticalPath)
         elif verticalPath is None:
-            return horizontalPath
+            return len(horizontalPath)
         elif len(horizontalPath) < len(verticalPath):
-            return horizontalPath
+            return len(horizontalPath)
         else:
-            return verticalPath
+            return len(verticalPath)
     
     if horizontalPath is not None:
         horizontalPath = robot2(horizontalPath, level + 1)
     if verticalPath is not None: 
         verticalPath = robot2(verticalPath, level + 1)
 
-    return min(horizontalPath, verticalPath, key = lambda x: len(x) if x is not None else float('inf'))
+    return min(horizontalPath, verticalPath, key = lambda x: x if x is not None else float('inf'))
 
 seen = dict()
+seen2 = dict()
 def robot2(code, level):
-    if (code, level) not in seen:
-        result = ''
+    if (code, level) not in seen2: 
+        result = 0
         
         start_pos = dir_to_pos['A']
         for key in code:
-            result = ''.join([result, find_path_recursive(start_pos, dir_to_pos[key], (0, 0), level = level)])
+            if (start_pos, dir_to_pos[key], level) not in seen:
+                seen[(start_pos, dir_to_pos[key], level)] = find_path_recursive(start_pos, dir_to_pos[key], (0, 0), level = level)
+            result += seen[(start_pos, dir_to_pos[key], level)]
             start_pos = dir_to_pos[key]
-            seen[(code, level)] = result
-    return seen[(code, level)]
+        seen2[(code, level)] = result
+    return seen2[(code, level)]
 
 def robot1(code):
-    res = ''
+    res = 0
     start_pos = num_to_pos['A']
     for key in code:
-        res = ''.join([res, find_path_recursive(start_pos, num_to_pos[key], (3, 0), level = 0)])
+        res += find_path_recursive(start_pos, num_to_pos[key], (3, 0), level = 0)
         start_pos = num_to_pos[key]
     return res
 
@@ -113,7 +116,7 @@ with open("input/dec21.txt", "r") as file:
     sum = 0 
     while code := file.readline():
         answer = find_sequence(code)
-        print(len(answer), "*", find_number(code))
-        sum += len(answer) * find_number(code)
+        print(answer, "*", find_number(code))
+        sum += answer * find_number(code)
         
     print(sum)
