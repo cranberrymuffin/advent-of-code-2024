@@ -12,23 +12,23 @@ def vertical_first(currPos, finalPos, invalidPos):
     path = ''
     for i in range(abs(moves[0])):
         if moves[0] > 0:
-            path += 'v'
+            path = ''.join([path, 'v'])
             currPos = (currPos[0] + 1, currPos[1])
         elif moves[0] < 0:
-            path += '^'
+            path = ''.join([path, '^'])
             currPos = (currPos[0] - 1, currPos[1])
         if currPos == invalidPos:
             return None
     for i in range(abs(moves[1])):
         if moves[1] > 0:
-            path += '>'
+            path = ''.join([path, '>'])
             currPos = (currPos[0], currPos[1] + 1)
         elif moves[1] < 0:
-            path += '<'
+            path = ''.join([path, '<'])
             currPos = (currPos[0], currPos[1] - 1)
         if currPos == invalidPos:
             return None
-    path += 'A'
+    path = ''.join([path, 'A'])
     return path
 
 def horizontal_first(currPos, finalPos, invalidPos):
@@ -36,77 +36,75 @@ def horizontal_first(currPos, finalPos, invalidPos):
     path = ''
     for i in range(abs(moves[1])):
         if moves[1] > 0:
-            path += '>'
+            path = ''.join([path, '>'])
             currPos = (currPos[0], currPos[1] + 1)
         elif moves[1] < 0:
-            path += '<'
+            path = ''.join([path, '<'])
             currPos = (currPos[0], currPos[1] - 1)
         if currPos == invalidPos:
             return None
     for i in range(abs(moves[0])):
         if moves[0] > 0:
-            path += 'v'
+            path = ''.join([path, 'v'])
             currPos = (currPos[0] + 1, currPos[1])
         elif moves[0] < 0:
-            path += '^'
+            path = ''.join([path, '^'])
             currPos = (currPos[0] - 1, currPos[1])
         if currPos == invalidPos:
             return None
-    path += 'A'
+    path = ''.join([path, 'A'])
     return path
 
-def find_path(currPos, finalPos, invalidPos, level = 0):
-    verticalFirst = vertical_first(currPos, finalPos, invalidPos)
-    horizontalFirst = horizontal_first(currPos, finalPos, invalidPos)
-    if verticalFirst is None:
-        return horizontalFirst
-    elif horizontalFirst is None:
-        return verticalFirst
-    elif len(verticalFirst) < len(horizontalFirst):
-        return verticalFirst
-    elif level < 2:
-        robot2HorizontalFirst = robot2(horizontalFirst, level + 1)
-        robot2VerticalFirst = robot2(verticalFirst, level + 1)
-        if robot2HorizontalFirst is None:
-            return verticalFirst
-        elif robot2VerticalFirst is None:
-            return horizontalFirst
-        elif len(robot2HorizontalFirst) < len(robot2VerticalFirst):
-            return horizontalFirst
+verticalPaths = dict()
+horizontalPaths = dict()
+
+def find_path_recursive(currPos, finalPos, invalidPos, horizontalPath = '', verticalPath = '', level = 0):
+    if (currPos, finalPos, invalidPos) not in verticalPaths:
+        verticalPaths[(currPos, finalPos, invalidPos)] = vertical_first(currPos, finalPos, invalidPos)
+    if (currPos, finalPos, invalidPos) not in horizontalPaths:
+        horizontalPaths[(currPos, finalPos, invalidPos)] = horizontal_first(currPos, finalPos, invalidPos)
+    verticalPath = verticalPaths[(currPos, finalPos, invalidPos)]
+    horizontalPath = horizontalPaths[(currPos, finalPos, invalidPos)]
+
+    if level == 2:
+        if horizontalPath is None:
+            return verticalPath
+        elif verticalPath is None:
+            return horizontalPath
+        elif len(horizontalPath) < len(verticalPath):
+            return horizontalPath
         else:
-            robot2HorizontalFirst = robot2(robot2HorizontalFirst, level + 1)
-            robot2VerticalFirst = robot2(robot2VerticalFirst, level + 1)
-            if robot2HorizontalFirst is None:
-                return verticalFirst
-            elif robot2VerticalFirst is None:
-                return horizontalFirst
-            elif len(robot2HorizontalFirst) < len(robot2VerticalFirst):
-                return horizontalFirst
-            else:
-                return verticalFirst
-    else:
-        return verticalFirst
-
+            return verticalPath
     
+    if horizontalPath is not None:
+        horizontalPath = robot2(horizontalPath, level + 1)
+    if verticalPath is not None: 
+        verticalPath = robot2(verticalPath, level + 1)
 
+    return min(horizontalPath, verticalPath, key = lambda x: len(x) if x is not None else float('inf'))
+
+seen = dict()
 def robot2(code, level):
-    res = ''
-    start_pos = dir_to_pos['A']
-    for key in code:
-        res+= find_path(start_pos, dir_to_pos[key], (0, 0), level)
-        start_pos = dir_to_pos[key]
-    return res
+    if (code, level) not in seen:
+        result = ''
+        
+        start_pos = dir_to_pos['A']
+        for key in code:
+            result = ''.join([result, find_path_recursive(start_pos, dir_to_pos[key], (0, 0), level = level)])
+            start_pos = dir_to_pos[key]
+            seen[(code, level)] = result
+    return seen[(code, level)]
 
 def robot1(code):
     res = ''
     start_pos = num_to_pos['A']
     for key in code:
-        res += find_path(start_pos, num_to_pos[key], (3, 0), 0)
+        res = ''.join([res, find_path_recursive(start_pos, num_to_pos[key], (3, 0), level = 0)])
         start_pos = num_to_pos[key]
     return res
 
 def find_sequence(code):
-   return robot2(robot2(robot1(code.strip()), 1), 2)
+   return robot1(code.strip())
     
 def find_number(code):
     return int(re.findall('\d+', code)[0])
@@ -114,7 +112,8 @@ def find_number(code):
 with open("input/dec21.txt", "r") as file:
     sum = 0 
     while code := file.readline():
-        print(len(find_sequence(code)), "*", find_number(code))
-        sum += len(find_sequence(code)) * find_number(code)
+        answer = find_sequence(code)
+        print(len(answer), "*", find_number(code))
+        sum += len(answer) * find_number(code)
         
     print(sum)
